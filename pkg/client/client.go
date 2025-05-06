@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 )
 
-const baseURL = "https://env0.sh"
+const baseURL = "https://env0-api.vercel.app"
 
 // ClientError wraps HTTP status codes and underlying errors
 type ClientError struct {
@@ -98,7 +98,7 @@ func (c *client) Signup(ctx context.Context, username, email, password string) e
 
 // Login authenticates and saves token to config
 func (c *client) Login(ctx context.Context, usernameOrEmail, password string) error {
-	body := map[string]string{"usernameOrEmail": usernameOrEmail, "password": password}
+	body := map[string]string{"emailOrUsername": usernameOrEmail, "password": password}
 	resp, data, err := c.doRequest(ctx, http.MethodPost, "/api/v1/login", body)
 	if err != nil {
 		return err
@@ -111,17 +111,24 @@ func (c *client) Login(ctx context.Context, usernameOrEmail, password string) er
 		}
 		return &ClientError{Status: resp.StatusCode}
 	}
-	// extract token
-	var res map[string]string
+	type LoginResp struct {
+		Token string `json:"token"`
+		User  struct {
+			ID       string `json:"id"`
+			Username string `json:"username"`
+			Email    string `json:"email"`
+		} `json:"user"`
+	}
+	var res LoginResp
 	if err := json.Unmarshal(data, &res); err != nil {
 		return err
 	}
-	token := res["token"]
+
 	// save auth
-	if err := SaveAuth(token); err != nil {
+	if err := SaveAuth(res.Token); err != nil {
 		return err
 	}
-	c.token = token
+	c.token = res.Token
 	return nil
 }
 
