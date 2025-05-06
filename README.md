@@ -15,7 +15,7 @@
 Ensure you have Go 1.24+ installed. Then:
 
 ```bash
-git clone https://github.com/your-org/env0-cli.git
+git clone https://github.com/Jibaru/env0.git
 cd env0-cli
 go build -o env0 ./cmd/env0
 # Optional: Move to your PATH
