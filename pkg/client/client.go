@@ -66,7 +66,7 @@ func (c *client) doRequest(ctx context.Context, method, path string, body interf
 	}
 	req.Header.Add("Content-Type", "application/json")
 	if c.token != "" {
-		req.Header.Add("Authentication", c.token)
+		req.Header.Add("Authorization", c.token)
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
