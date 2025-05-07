@@ -52,13 +52,21 @@ func pushCmd() *cobra.Command {
 			files, _ := os.ReadDir(".")
 			for _, fi := range files {
 				name := fi.Name()
-				if !strings.HasPrefix(name, ".env.") {
+				if name != ".env" && !strings.HasPrefix(name, ".env.") {
 					continue
 				}
-				envName := strings.TrimPrefix(name, ".env.")
+
+				var envName string
+				if name == ".env" {
+					envName = ""
+				} else {
+					envName = strings.TrimPrefix(name, ".env.")
+				}
+
 				if target != "" && envName != target {
 					continue
 				}
+
 				content, _ := os.ReadFile(name)
 				lines := strings.Split(string(content), "\n")
 				vars := make(map[string]interface{})
@@ -71,6 +79,7 @@ func pushCmd() *cobra.Command {
 				}
 				envs[envName] = vars
 			}
+
 			// if target set but not found, ensure empty
 			if target != "" && envs[target] == nil {
 				envs[target] = map[string]interface{}{}

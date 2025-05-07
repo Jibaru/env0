@@ -53,7 +53,13 @@ func pullCmd() *cobra.Command {
 
 			// 4) Write .env files
 			for envName, vars := range envs {
-				fileName := fmt.Sprintf(".env.%s", envName)
+				fileName := ""
+				if envName == "" {
+					fileName = ".env"
+				} else {
+					fileName = fmt.Sprintf(".env.%s", envName)
+				}
+
 				file, err := os.Create(fileName)
 				if err != nil {
 					return err
