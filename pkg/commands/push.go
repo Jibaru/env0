@@ -45,9 +45,12 @@ func pushCmd() *cobra.Command {
 
 			// 3) Read .env files
 			envs := make(map[string]map[string]interface{})
-			target := ""
+			var target *string
 			if len(args) == 1 {
-				target = args[0]
+				target = &args[0]
+				if *target == defaultTargetEnv {
+					target = &defaultTargetEnvKey
+				}
 			}
 			files, _ := os.ReadDir(".")
 			for _, fi := range files {
@@ -63,7 +66,7 @@ func pushCmd() *cobra.Command {
 					envName = strings.TrimPrefix(name, ".env.")
 				}
 
-				if target != "" && envName != target {
+				if target != nil && envName != *target {
 					continue
 				}
 
@@ -81,8 +84,8 @@ func pushCmd() *cobra.Command {
 			}
 
 			// if target set but not found, ensure empty
-			if target != "" && envs[target] == nil {
-				envs[target] = map[string]interface{}{}
+			if target != nil && envs[*target] == nil {
+				envs[*target] = map[string]interface{}{}
 			}
 
 			// 4) Push via API

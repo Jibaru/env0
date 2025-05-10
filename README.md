@@ -85,10 +85,12 @@ Once authenticated, you can initialize, clone, and manage apps.
 
 ### Environment Operations
 
+> Important: environment called "default" is reserved for `.env` file.
+
 | Command               | Description                                    |
 | --------------------- | ---------------------------------------------- |
 | `pull [<env>]`        | Fetch latest variables to local `.env` files       |
-| `push`        | Upload local `.env` files to remote service    |
+| `push [<env>]`        | Upload local `.env` files to remote service.    |
 
 ### User Management
 
@@ -123,9 +125,20 @@ env0 clone alice/myapp
 # Pull latest environment variables
 env0 pull
 
-# Push all env files or just 'dev'
+# Pull ".env" file only
+env0 pull default
+
+# Pull ".env.prod" file only
+env0 pull prod
+
+# Push all env files
 env0 push
+
+# Push ".env.dev" file only
 env0 push dev
+
+# Push only contents from ".env" file
+env0 push default
 
 # Add a new user 'bob' to your app
 env0 adduser bob

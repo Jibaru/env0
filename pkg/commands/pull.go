@@ -4,20 +4,34 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/spf13/cobra"
 
 	"env0/pkg/client"
 )
 
+const defaultTargetEnv string = "default"
+
+var defaultTargetEnvKey string = ""
+
 func pullCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "pull",
-		Args:  cobra.NoArgs,
+		Use:   "pull [envName]",
+		Args:  cobra.MaximumNArgs(1),
 		Short: "Pull the latest environments for the initialized app",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			var target *string
+			if len(args) == 1 {
+				target = &args[0]
+				if *target == defaultTargetEnv {
+					target = &defaultTargetEnvKey
+				}
+			}
+
 			// 1) Load auth token
 			token, err := client.LoadToken()
 			if err != nil {
@@ -53,6 +67,12 @@ func pullCmd() *cobra.Command {
 
 			// 4) Write .env files
 			for envName, vars := range envs {
+				if target != nil {
+					if envName != *target {
+						continue
+					}
+				}
+
 				fileName := ""
 				if envName == "" {
 					fileName = ".env"
@@ -64,6 +84,10 @@ func pullCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
+
+				keys := slices.Collect(maps.Keys(vars))
+				slices.Sort(keys)
+
 				for k, v := range vars {
 					fmt.Fprintf(file, "%s=%v\n", k, v)
 				}
