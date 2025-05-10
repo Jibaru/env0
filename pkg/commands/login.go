@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"env0/pkg/client"
+	"github.com/Jibaru/env0/pkg/client"
 )
 
 func loginCmd() *cobra.Command {

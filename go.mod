@@ -1,4 +1,4 @@
-module env0
+module github.com/Jibaru/env0
 
 go 1.24
 

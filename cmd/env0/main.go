@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"env0/pkg/commands"
+	"github.com/Jibaru/env0/pkg/commands"
 )
 
 func main() {
