@@ -7,7 +7,7 @@ import (
 )
 
 func versionCmd() *cobra.Command {
-	const version = "v0.0.1"
+	const version = "v0.0.2"
 
 	return &cobra.Command{
 		Use:   "version",
