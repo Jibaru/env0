@@ -14,6 +14,8 @@
   - [Table of Contents](#table-of-contents)
   - [Features](#features)
   - [Installation](#installation)
+    - [Download the latest release](#download-the-latest-release)
+    - [Using go](#using-go)
   - [Getting Started](#getting-started)
   - [Commands](#commands)
     - [Authentication](#authentication)
@@ -38,7 +40,19 @@
 
 ## Installation
 
+### Download the latest release
+
+[See releases](https://github.com/Jibaru/env0/releases)
+
+### Using go
+
 Ensure you have Go 1.24 or newer installed.
+
+```bash
+go install github.com/Jibaru/env0/cmd/env0@v
+```
+
+Or you can build it by yourself.
 
 ```bash
 git clone https://github.com/Jibaru/env0.git
