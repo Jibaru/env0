@@ -49,7 +49,7 @@
 Ensure you have Go 1.24 or newer installed.
 
 ```bash
-go install github.com/Jibaru/env0/cmd/env0@v
+go install github.com/Jibaru/env0/cmd/env0@latest
 ```
 
 Or you can build it by yourself.
