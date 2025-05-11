@@ -8,6 +8,9 @@
 
 ---
 
+[![basic_flow](assets/env0-basic-flow.jpg)](https://www.youtube.com/watch?v=EJo_onCrDec)
+
+
 ## Table of Contents
 
 - [env0](#env0)
