@@ -8,7 +8,7 @@
 
 ---
 
-[![basic_flow](assets/env0-basic-flow.jpg)](https://www.youtube.com/watch?v=EJo_onCrDec)
+[![starter-guide](assets/env0-starter-guide.png)](https://youtube.com/playlist?list=PLFUBk0vf6VP84NrDu4-0zVYBUgYc_TfpP&si=54fpvtH8B1osLxC8)
 
 
 ## Table of Contents
