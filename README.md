@@ -59,9 +59,9 @@ Or you can build it by yourself.
 
 ```bash
 git clone https://github.com/Jibaru/env0.git
-cd env0/cli
+cd env0
 go build -o env0 ./cmd/env0
-# (Optional) Move binary into your PATH:
+# (Optional) Move binary into your PATH (you can run this command as sudo):
 mv env0 /usr/local/bin/
 ```
 
