@@ -230,9 +230,26 @@ func (c *client) RemoveUser(ctx context.Context, fullAppName, username string) e
 	return nil
 }
 
+// getHomeDir returns the user's home directory in a cross-platform way
+func getHomeDir() (string, error) {
+	// Try USERPROFILE for Windows first
+	if home := os.Getenv("USERPROFILE"); home != "" {
+		return home, nil
+	}
+	// Try HOME for Unix-like systems
+	if home := os.Getenv("HOME"); home != "" {
+		return home, nil
+	}
+	return "", fmt.Errorf("unable to determine user home directory")
+}
+
 // SaveAuth persists the token to the user's home directory
 func SaveAuth(token string) error {
-	cfgPath := filepath.Join(os.Getenv("HOME"), ".env0_cfg")
+	home, err := getHomeDir()
+	if err != nil {
+		return err
+	}
+	cfgPath := filepath.Join(home, ".env0_cfg")
 	if err := os.MkdirAll(cfgPath, 0700); err != nil {
 		return err
 	}
@@ -243,7 +260,11 @@ func SaveAuth(token string) error {
 
 // LoadToken reads the saved token
 func LoadToken() (string, error) {
-	data, err := os.ReadFile(filepath.Join(os.Getenv("HOME"), ".env0_cfg", "auth.json"))
+	home, err := getHomeDir()
+	if err != nil {
+		return "", err
+	}
+	data, err := os.ReadFile(filepath.Join(home, ".env0_cfg", "auth.json"))
 	if err != nil {
 		return "", err
 	}
