@@ -3,11 +3,9 @@ package scripts
 import (
 	"context"
 	"fmt"
-	"maps"
-	"os"
-	"slices"
 
 	"github.com/Jibaru/env0/pkg/client"
+	"github.com/Jibaru/env0/pkg/envfile"
 	"github.com/Jibaru/env0/pkg/logger"
 )
 
@@ -51,25 +49,6 @@ func getEnvFileName(envName string) string {
 	return fmt.Sprintf(".env.%s", envName)
 }
 
-func writeEnvFile(fileName string, vars map[string]interface{}) error {
-	file, err := os.Create(fileName)
-	if err != nil {
-		return fmt.Errorf("failed to create environment file %s: %v", fileName, err)
-	}
-	defer file.Close()
-
-	// Sort keys for consistent output
-	keys := slices.Collect(maps.Keys(vars))
-	slices.Sort(keys)
-
-	// Write sorted key-value pairs
-	for _, k := range keys {
-		fmt.Fprintf(file, "%s=%v\n", k, vars[k])
-	}
-
-	return nil
-}
-
 func writeEnvironmentFiles(envs map[string]map[string]interface{}, targetEnv *string, logger logger.Logger) error {
 	for envName, vars := range envs {
 		if targetEnv != nil && envName != *targetEnv {
@@ -77,7 +56,7 @@ func writeEnvironmentFiles(envs map[string]map[string]interface{}, targetEnv *st
 		}
 
 		fileName := getEnvFileName(envName)
-		if err := writeEnvFile(fileName, vars); err != nil {
+		if err := envfile.WriteEnvFile(fileName, vars); err != nil {
 			return err
 		}
 

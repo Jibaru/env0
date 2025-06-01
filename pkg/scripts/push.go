@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Jibaru/env0/pkg/client"
+	"github.com/Jibaru/env0/pkg/envfile"
 	"github.com/Jibaru/env0/pkg/logger"
 )
 
@@ -65,31 +66,6 @@ func readConfigFile() (*config, error) {
 	return &cfg, nil
 }
 
-func parseEnvFile(filename string) (map[string]interface{}, error) {
-	content, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read environment file %s: %v", filename, err)
-	}
-
-	vars := make(map[string]interface{})
-	lines := strings.Split(string(content), "\n")
-
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) != 2 {
-			continue
-		}
-		vars[parts[0]] = parts[1]
-	}
-
-	return vars, nil
-}
-
 func getEnvNameFromFile(filename string) string {
 	if filename == ".env" {
 		return ""
@@ -116,7 +92,7 @@ func processEnvFiles(targetEnv *string, logger logger.Logger) (map[string]map[st
 			continue
 		}
 
-		vars, err := parseEnvFile(name)
+		vars, err := envfile.ParseEnvFile(name)
 		if err != nil {
 			return nil, err
 		}
