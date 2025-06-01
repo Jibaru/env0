@@ -2,11 +2,10 @@ package commands
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/spf13/cobra"
 
-	"github.com/Jibaru/env0/pkg/client"
+	"github.com/Jibaru/env0/pkg/scripts"
 )
 
 func signupCmd() *cobra.Command {
@@ -15,18 +14,12 @@ func signupCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(3),
 		Short: "Create a new Env0 account",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := context.Background()
-			c := client.New("") // unauthenticated client
-			username, email, password := args[0], args[1], args[2]
-
-			if err := c.Signup(ctx, username, email, password); err != nil {
-				// If it's a ClientError, print its message; else, generic failure
-				fmt.Println(err.Error())
-				return nil
-			}
-
-			fmt.Println("Signup ok")
-			return nil
+			signup := scripts.NewSignup(apiClient, logger)
+			return signup(context.Background(), scripts.SignupInput{
+				Username: args[0],
+				Email:    args[1],
+				Password: args[2],
+			})
 		},
 	}
 	return cmd
