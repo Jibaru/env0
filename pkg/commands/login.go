@@ -2,11 +2,10 @@ package commands
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/spf13/cobra"
 
-	"github.com/Jibaru/env0/pkg/client"
+	"github.com/Jibaru/env0/pkg/scripts"
 )
 
 func loginCmd() *cobra.Command {
@@ -15,18 +14,11 @@ func loginCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(2),
 		Short: "Authenticate with Env0",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := context.Background()
-			usernameOrEmail, password := args[0], args[1]
-			c := client.New("") // token will be populated on successful login
-
-			if err := c.Login(ctx, usernameOrEmail, password); err != nil {
-				// Print API error message if available
-				fmt.Println(err.Error())
-				return nil
-			}
-
-			fmt.Println("Login ok")
-			return nil
+			login := scripts.NewLogin(apiClient, logger)
+			return login(context.Background(), scripts.LoginInput{
+				UsernameOrEmail: args[0],
+				Password:        args[1],
+			})
 		},
 	}
 	return cmd
