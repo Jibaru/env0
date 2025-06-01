@@ -2,16 +2,12 @@ package commands
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"maps"
-	"os"
-	"path/filepath"
-	"slices"
 
 	"github.com/spf13/cobra"
 
 	"github.com/Jibaru/env0/pkg/client"
+	"github.com/Jibaru/env0/pkg/scripts"
 )
 
 const defaultTargetEnv string = "default"
@@ -32,70 +28,17 @@ func pullCmd() *cobra.Command {
 				}
 			}
 
-			// 1) Load auth token
-			token, err := client.LoadToken()
+			token, err := scripts.LoadAndValidateToken()
 			if err != nil {
-				fmt.Println("Authenticate first")
-				return nil
-			}
-			if token == "" {
-				fmt.Println("Authenticate again")
-				return nil
+				return fmt.Errorf("authentication required")
 			}
 
-			// 2) Check local config
-			cfgPath := filepath.Join(".env0", "config.json")
-			data, err := os.ReadFile(cfgPath)
-			if err != nil {
-				fmt.Println("App not initialized")
-				return nil
-			}
-			var cfg struct {
-				AppName   string `json:"appName"`
-				OwnerName string `json:"ownerName"`
-			}
-			json.Unmarshal(data, &cfg)
-			fullAppName := fmt.Sprintf("%s/%s", cfg.OwnerName, cfg.AppName)
+			authClient := client.New(token)
 
-			// 3) Fetch envs from API
-			c := client.New(token)
-			envs, err := c.GetApp(context.Background(), fullAppName)
-			if err != nil {
-				fmt.Println(err.Error())
-				return nil
-			}
-
-			// 4) Write .env files
-			for envName, vars := range envs {
-				if target != nil {
-					if envName != *target {
-						continue
-					}
-				}
-
-				fileName := ""
-				if envName == "" {
-					fileName = ".env"
-				} else {
-					fileName = fmt.Sprintf(".env.%s", envName)
-				}
-
-				file, err := os.Create(fileName)
-				if err != nil {
-					return err
-				}
-
-				keys := slices.Collect(maps.Keys(vars))
-				slices.Sort(keys)
-
-				for k, v := range vars {
-					fmt.Fprintf(file, "%s=%v\n", k, v)
-				}
-				file.Close()
-			}
-
-			fmt.Println("Envs pulled")
-			return nil
+			pull := scripts.NewPull(authClient, logger)
+			return pull(context.Background(), scripts.PullInput{
+				TargetEnv: target,
+			})
 		},
 	}
 	return cmd
