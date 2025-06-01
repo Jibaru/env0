@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Jibaru/env0/pkg/client"
+	"github.com/Jibaru/env0/pkg/logger"
 )
 
 // LoginInput represents the input parameters for the login operation
@@ -16,7 +17,7 @@ type LoginInput struct {
 type LoginFn func(context.Context, LoginInput) error
 
 // NewLogin creates a new login function with injected dependencies
-func NewLogin(c client.Client, logger Logger) LoginFn {
+func NewLogin(c client.Client, logger logger.Logger) LoginFn {
 	return func(ctx context.Context, input LoginInput) error {
 		logger.Printf("attempting login for user: %s", input.UsernameOrEmail)
 
