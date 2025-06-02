@@ -29,7 +29,7 @@ func NewListApps(c client.Client, logger logger.Logger) ListAppsFn {
 
 		// Print each app's information
 		for _, app := range apps {
-			logger.Printf("App: %s/%s", app.UserID, app.Name)
+			logger.Printf("App: %s", app.Name)
 			logger.Printf("  ID: %s", app.ID)
 			logger.Printf("  Created: %s", app.CreatedAt)
 			logger.Printf("  Environment count: %d", len(app.Envs))
