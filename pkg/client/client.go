@@ -10,7 +10,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
+
+	"github.com/Jibaru/env0/pkg/auth"
 )
 
 const baseURL = "https://env0-api.vercel.app"
@@ -131,7 +132,8 @@ func (c *client) Login(ctx context.Context, usernameOrEmail, password string) er
 		}
 		return &ClientError{Status: resp.StatusCode}
 	}
-	type LoginResp struct {
+
+	var loginResp struct {
 		Token string `json:"token"`
 		User  struct {
 			ID       string `json:"id"`
@@ -139,16 +141,23 @@ func (c *client) Login(ctx context.Context, usernameOrEmail, password string) er
 			Email    string `json:"email"`
 		} `json:"user"`
 	}
-	var res LoginResp
-	if err := json.Unmarshal(data, &res); err != nil {
+	if err := json.Unmarshal(data, &loginResp); err != nil {
 		return err
 	}
 
-	// save auth
-	if err := SaveAuth(res.Token); err != nil {
+	// save auth with complete user info
+	authData := auth.Auth{
+		Token: loginResp.Token,
+		User: auth.User{
+			ID:       loginResp.User.ID,
+			Username: loginResp.User.Username,
+			Email:    loginResp.User.Email,
+		},
+	}
+	if err := auth.Save(authData); err != nil {
 		return err
 	}
-	c.token = res.Token
+	c.token = loginResp.Token
 	return nil
 }
 
@@ -261,38 +270,6 @@ func getHomeDir() (string, error) {
 		return home, nil
 	}
 	return "", fmt.Errorf("unable to determine user home directory")
-}
-
-// SaveAuth persists the token to the user's home directory
-func SaveAuth(token string) error {
-	home, err := getHomeDir()
-	if err != nil {
-		return err
-	}
-	cfgPath := filepath.Join(home, ".env0_cfg")
-	if err := os.MkdirAll(cfgPath, 0700); err != nil {
-		return err
-	}
-	auth := map[string]string{"token": token}
-	data, _ := json.Marshal(auth)
-	return os.WriteFile(filepath.Join(cfgPath, "auth.json"), data, 0600)
-}
-
-// LoadToken reads the saved token
-func LoadToken() (string, error) {
-	home, err := getHomeDir()
-	if err != nil {
-		return "", err
-	}
-	data, err := os.ReadFile(filepath.Join(home, ".env0_cfg", "auth.json"))
-	if err != nil {
-		return "", err
-	}
-	var auth map[string]string
-	if err := json.Unmarshal(data, &auth); err != nil {
-		return "", err
-	}
-	return auth["token"], nil
 }
 
 // ListApps lists all applications the authenticated user has access to

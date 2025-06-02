@@ -3,12 +3,12 @@ package scripts
 import (
 	"fmt"
 
-	"github.com/Jibaru/env0/pkg/client"
+	"github.com/Jibaru/env0/pkg/auth"
 )
 
 // LoadAndValidateToken loads and validates the authentication token
 func LoadAndValidateToken() (string, error) {
-	token, err := client.LoadToken()
+	token, err := auth.LoadToken()
 	if err != nil {
 		return "", fmt.Errorf("authentication required")
 	}
