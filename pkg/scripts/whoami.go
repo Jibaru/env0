@@ -22,17 +22,22 @@ func NewWhoAmI(c client.Client, logger logger.Logger) WhoAmIFn {
 		authData, err := auth.Load()
 		if err != nil {
 			logger.Printf("Status: Not authenticated")
+			logger.Printf("Reason: %v", err)
 			return nil
 		}
 
-		// If we have user info, display it
-		if authData.User.Username != "" {
+		if !authData.IsAuthenticated() {
+			logger.Printf("Status: Not authenticated")
+			logger.Printf("Reason: Token is invalid or expired")
+			return nil
+		}
+
+		logger.Printf("Status: Authenticated")
+
+		if authData.HasUserInfo() {
 			logger.Printf("Username: %s", authData.User.Username)
 			logger.Printf("Email: %s", authData.User.Email)
-			logger.Printf("Status: Authenticated")
 		} else {
-			// We have a token but no user info, show limited info
-			logger.Printf("Status: Authenticated")
 			logger.Printf("Note: Login again to see full user information")
 		}
 
