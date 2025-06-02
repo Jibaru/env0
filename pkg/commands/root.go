@@ -15,5 +15,7 @@ func RegisterCommands(root *cobra.Command) {
 		addUserCmd(),
 		delUserCmd(),
 		versionCmd(),
+		listAppsCmd(),
+		listUsersCmd(),
 	)
 }
