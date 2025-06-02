@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 
 	"github.com/Jibaru/env0/pkg/auth"
 )
@@ -257,19 +256,6 @@ func (c *client) RemoveUser(ctx context.Context, fullAppName, username string) e
 		return &ClientError{Status: resp.StatusCode}
 	}
 	return nil
-}
-
-// getHomeDir returns the user's home directory in a cross-platform way
-func getHomeDir() (string, error) {
-	// Try USERPROFILE for Windows first
-	if home := os.Getenv("USERPROFILE"); home != "" {
-		return home, nil
-	}
-	// Try HOME for Unix-like systems
-	if home := os.Getenv("HOME"); home != "" {
-		return home, nil
-	}
-	return "", fmt.Errorf("unable to determine user home directory")
 }
 
 // ListApps lists all applications the authenticated user has access to
