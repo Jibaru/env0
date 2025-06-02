@@ -24,6 +24,24 @@ type User struct {
 	Email    string `json:"email"`
 }
 
+// GetConfigDir returns the full path to the env0 config directory
+func GetConfigDir() (string, error) {
+	home, err := getHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, ".env0_cfg"), nil
+}
+
+// GetAuthFile returns the full path to the auth.json file
+func GetAuthFile() (string, error) {
+	cfgDir, err := GetConfigDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(cfgDir, "auth.json"), nil
+}
+
 // IsValid checks if the auth token is a valid JWT and not expired
 func (a *Auth) IsValid() bool {
 	if a == nil || a.Token == "" {
@@ -71,13 +89,12 @@ func (a *Auth) HasUserInfo() bool {
 
 // Save persists the authentication data to the user's home directory
 func Save(auth Auth) error {
-	home, err := getHomeDir()
+	cfgDir, err := GetConfigDir()
 	if err != nil {
 		return err
 	}
 
-	cfgPath := filepath.Join(home, ".env0_cfg")
-	if err := os.MkdirAll(cfgPath, 0700); err != nil {
+	if err := os.MkdirAll(cfgDir, 0700); err != nil {
 		return fmt.Errorf("failed to create config directory: %v", err)
 	}
 
@@ -86,7 +103,12 @@ func Save(auth Auth) error {
 		return fmt.Errorf("failed to marshal auth data: %v", err)
 	}
 
-	if err := os.WriteFile(filepath.Join(cfgPath, "auth.json"), data, 0600); err != nil {
+	authFile, err := GetAuthFile()
+	if err != nil {
+		return err
+	}
+
+	if err := os.WriteFile(authFile, data, 0600); err != nil {
 		return fmt.Errorf("failed to write auth file: %v", err)
 	}
 
@@ -95,12 +117,12 @@ func Save(auth Auth) error {
 
 // Load reads the saved authentication data
 func Load() (*Auth, error) {
-	home, err := getHomeDir()
+	authFile, err := GetAuthFile()
 	if err != nil {
 		return nil, err
 	}
 
-	data, err := os.ReadFile(filepath.Join(home, ".env0_cfg", "auth.json"))
+	data, err := os.ReadFile(authFile)
 	if err != nil {
 		return nil, fmt.Errorf("no auth data found: %v", err)
 	}
