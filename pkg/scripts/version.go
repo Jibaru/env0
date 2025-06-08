@@ -7,7 +7,7 @@ import (
 )
 
 // Version represents the current version of the application
-const Version = "v0.1.0"
+const Version = "v0.2.0"
 
 // VersionFn represents a function that performs the version operation
 type VersionFn func(context.Context) error
