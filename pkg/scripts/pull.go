@@ -60,15 +60,6 @@ func processEnvironmentUpdates(envs map[string]map[string]interface{}, targetEnv
 
 		fileName := getEnvFileName(envName)
 
-		// Create backup of current env file
-		backupPath, err := envdiff.CreateBackup(fileName)
-		if err != nil {
-			return fmt.Errorf("failed to create backup for %s: %v", fileName, err)
-		}
-		if backupPath != "" {
-			logger.Printf("created backup at: %s", backupPath)
-		}
-
 		// Load current environment if it exists
 		currentVars, err := envfile.ParseEnvFile(fileName)
 		if err != nil {

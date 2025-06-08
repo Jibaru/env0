@@ -2,10 +2,7 @@ package envdiff
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
-	"time"
 )
 
 // DeletedValue is a special type to represent deleted values
@@ -53,30 +50,6 @@ func CompareMaps(original, new map[string]interface{}) DiffResult {
 		SafeToMerge: safeToMerge,
 		Changes:     changes,
 	}
-}
-
-// CreateBackup creates a backup of the environment file
-func CreateBackup(envFile string) (string, error) {
-	content, err := os.ReadFile(envFile)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return "", nil // No backup needed if file doesn't exist
-		}
-		return "", fmt.Errorf("failed to read env file: %v", err)
-	}
-
-	timestamp := time.Now().Format("20060102150405")
-	backupDir := filepath.Join(".env0", "backups")
-	if err := os.MkdirAll(backupDir, 0755); err != nil {
-		return "", fmt.Errorf("failed to create backup directory: %v", err)
-	}
-
-	backupFile := filepath.Join(backupDir, fmt.Sprintf("%s.%s.bak", filepath.Base(envFile), timestamp))
-	if err := os.WriteFile(backupFile, content, 0644); err != nil {
-		return "", fmt.Errorf("failed to write backup file: %v", err)
-	}
-
-	return backupFile, nil
 }
 
 // MergeMaps merges two environment maps based on the diff result
