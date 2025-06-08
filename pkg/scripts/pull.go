@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"time"
+	"strings"
 
 	"github.com/Jibaru/env0/pkg/client"
 	"github.com/Jibaru/env0/pkg/envdiff"
@@ -95,17 +95,40 @@ func processEnvironmentUpdates(envs map[string]map[string]interface{}, targetEnv
 			}
 			logger.Printf("safely merged %d new variables into %s", len(diff.Changes), fileName)
 		} else {
-			// There are conflicts, keep current state and save conflict report
-			report := envdiff.ConflictReport{
-				Environment: envName,
-				Conflicts:   diff.Changes,
-				Timestamp:   time.Now(),
+			// Write conflicts directly to the env file
+			var content strings.Builder
+
+			// First write all non-conflicting variables
+			for k, v := range currentVars {
+				isConflicting := false
+				for _, change := range diff.Changes {
+					if change.Name == k && change.Type == envdiff.Modified {
+						isConflicting = true
+						break
+					}
+				}
+				if !isConflicting {
+					content.WriteString(fmt.Sprintf("%s=%v\n", k, v))
+				}
 			}
-			if err := envdiff.SaveConflictReport(report); err != nil {
-				return fmt.Errorf("failed to save conflict report for %s: %v", fileName, err)
+
+			// Then write conflicts with git-style markers
+			for _, change := range diff.Changes {
+				if change.Type == envdiff.Modified {
+					content.WriteString(envdiff.FormatGitStyleConflict(change.Name, change.OldValue, change.NewValue))
+				} else if change.Type == envdiff.Added {
+					content.WriteString(fmt.Sprintf("%s=%v\n", change.Name, change.NewValue))
+				} else if change.Type == envdiff.Deleted {
+					content.WriteString(envdiff.FormatGitStyleConflict(change.Name, change.OldValue, "DELETED"))
+				}
 			}
-			logger.Printf("detected conflicts in %s, saved conflict report and preserved current state", fileName)
-			logger.Printf("review conflicts in .env0/conflicts directory")
+
+			if err := os.WriteFile(fileName, []byte(content.String()), 0644); err != nil {
+				return fmt.Errorf("failed to write conflict markers to %s: %v", fileName, err)
+			}
+
+			logger.Printf("detected conflicts in %s, marked conflicts in file with git-style markers", fileName)
+			logger.Printf("please resolve conflicts manually and run push when ready")
 		}
 	}
 

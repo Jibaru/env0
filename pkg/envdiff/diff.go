@@ -1,10 +1,10 @@
 package envdiff
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -76,29 +76,6 @@ func CreateBackup(envFile string) (string, error) {
 	return backupFile, nil
 }
 
-// SaveConflictReport saves a conflict report to a file
-func SaveConflictReport(report ConflictReport) error {
-	reportsDir := filepath.Join(".env0", "conflicts")
-	if err := os.MkdirAll(reportsDir, 0755); err != nil {
-		return fmt.Errorf("failed to create conflicts directory: %v", err)
-	}
-
-	filename := filepath.Join(reportsDir, fmt.Sprintf("conflicts_%s_%s.json",
-		report.Environment,
-		report.Timestamp.Format("20060102150405")))
-
-	data, err := json.MarshalIndent(report, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal conflict report: %v", err)
-	}
-
-	if err := os.WriteFile(filename, data, 0644); err != nil {
-		return fmt.Errorf("failed to write conflict report: %v", err)
-	}
-
-	return nil
-}
-
 // MergeMaps merges two environment maps based on the diff result
 func MergeMaps(original, new map[string]interface{}, diff DiffResult) map[string]interface{} {
 	result := make(map[string]interface{})
@@ -118,4 +95,15 @@ func MergeMaps(original, new map[string]interface{}, diff DiffResult) map[string
 	}
 
 	return result
+}
+
+// FormatGitStyleConflict formats a variable conflict with git-style markers
+func FormatGitStyleConflict(key string, localValue, remoteValue interface{}) string {
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("<<<<<<< LOCAL\n"))
+	sb.WriteString(fmt.Sprintf("%s=%v\n", key, localValue))
+	sb.WriteString(fmt.Sprintf("=======\n"))
+	sb.WriteString(fmt.Sprintf("%s=%v\n", key, remoteValue))
+	sb.WriteString(fmt.Sprintf(">>>>>>> REMOTE\n"))
+	return sb.String()
 }

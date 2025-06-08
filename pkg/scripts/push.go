@@ -1,13 +1,13 @@
 package scripts
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/Jibaru/env0/pkg/client"
 	"github.com/Jibaru/env0/pkg/envdiff"
@@ -71,6 +71,24 @@ func NewPush(c client.Client, logger logger.Logger) PushFn {
 	}
 }
 
+func promptForOverride(key string, oldValue, newValue interface{}, logger logger.Logger) bool {
+	fmt.Printf("\nVariable override detected:\n")
+	fmt.Printf("Key: %s\n", key)
+	fmt.Printf("Current value: %v\n", oldValue)
+	fmt.Printf("New value: %v\n", newValue)
+	fmt.Printf("Do you want to override this variable? [y/N]: ")
+
+	reader := bufio.NewReader(os.Stdin)
+	response, err := reader.ReadString('\n')
+	if err != nil {
+		logger.Printf("Error reading response: %v", err)
+		return false
+	}
+
+	response = strings.ToLower(strings.TrimSpace(response))
+	return response == "y" || response == "yes"
+}
+
 func processPushUpdates(localEnvs, remoteEnvs map[string]map[string]interface{}, targetEnv *string, logger logger.Logger) (map[string]map[string]interface{}, error) {
 	mergedEnvs := make(map[string]map[string]interface{})
 	hasChanges := false
@@ -94,25 +112,43 @@ func processPushUpdates(localEnvs, remoteEnvs map[string]map[string]interface{},
 			continue
 		}
 
-		// If there are changes, decide what to do
-		if diff.SafeToMerge {
-			// Only new variables, safe to merge
-			mergedVars := envdiff.MergeMaps(remoteVars, localVars, diff)
+		// Create a copy of remote vars for merging
+		mergedVars := make(map[string]interface{})
+		for k, v := range remoteVars {
+			mergedVars[k] = v
+		}
+
+		// Process each change with user confirmation for modifications
+		skippedChanges := false
+		for _, change := range diff.Changes {
+			switch change.Type {
+			case envdiff.Modified:
+				if promptForOverride(change.Name, change.OldValue, change.NewValue, logger) {
+					mergedVars[change.Name] = change.NewValue
+					hasChanges = true
+				} else {
+					skippedChanges = true
+				}
+			case envdiff.Added:
+				mergedVars[change.Name] = change.NewValue
+				hasChanges = true
+			case envdiff.Deleted:
+				if promptForOverride(change.Name, change.OldValue, "DELETED", logger) {
+					delete(mergedVars, change.Name)
+					hasChanges = true
+				} else {
+					skippedChanges = true
+				}
+			}
+		}
+
+		if skippedChanges {
+			logger.Printf("some changes were skipped for environment: %s", envName)
+		}
+
+		if hasChanges {
 			mergedEnvs[envName] = mergedVars
-			hasChanges = true
-			logger.Printf("safely merged %d new variables for environment: %s", len(diff.Changes), envName)
-		} else {
-			// There are conflicts, create conflict report
-			report := envdiff.ConflictReport{
-				Environment: envName,
-				Conflicts:   diff.Changes,
-				Timestamp:   time.Now(),
-			}
-			if err := envdiff.SaveConflictReport(report); err != nil {
-				return nil, fmt.Errorf("failed to save conflict report for %s: %v", envName, err)
-			}
-			logger.Printf("detected conflicts in %s, saved conflict report", envName)
-			logger.Printf("review conflicts in .env0/conflicts directory")
+			logger.Printf("processed changes for environment: %s", envName)
 		}
 	}
 
