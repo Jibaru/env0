@@ -72,11 +72,29 @@ func NewPush(c client.Client, logger logger.Logger, reader prompt.Reader) PushFn
 }
 
 func promptForOverride(key string, oldValue, newValue interface{}, logger logger.Logger, reader prompt.Reader) bool {
-	fmt.Printf("\nVariable override detected:\n")
-	fmt.Printf("Key: %s\n", key)
-	fmt.Printf("Current value: %v\n", oldValue)
-	fmt.Printf("New value: %v\n", newValue)
-	fmt.Printf("Do you want to override this variable? [y/N]: ")
+	logger.Printf("\nVariable change detected for: %s\n", key)
+	logger.Printf("─────────────────────────\n")
+
+	// Handle display of current value
+	if oldValue == nil {
+		logger.Printf("Currently no value exists\n")
+	} else {
+		logger.Printf("Current value: %v\n", oldValue)
+	}
+
+	// Handle display of new value and determine action type
+	var actionMsg string
+	if newValue == nil || newValue == envdiff.Deleted {
+		actionMsg = "Do you want to remove this variable"
+	} else if oldValue == nil {
+		logger.Printf("New value: %v\n", newValue)
+		actionMsg = "Do you want to add this variable"
+	} else {
+		logger.Printf("New value: %v\n", newValue)
+		actionMsg = "Do you want to change this variable"
+	}
+	logger.Printf("─────────────────────────\n")
+	logger.Printf("%s? [y/N]: ", actionMsg)
 
 	response, err := reader.ReadString('\n')
 	if err != nil {
