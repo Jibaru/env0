@@ -100,10 +100,10 @@ func MergeMaps(original, new map[string]interface{}, diff DiffResult) map[string
 // FormatGitStyleConflict formats a variable conflict with git-style markers
 func FormatGitStyleConflict(key string, localValue, remoteValue interface{}) string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("<<<<<<< LOCAL\n"))
+	sb.WriteString("<<<<<<< LOCAL\n")
 	sb.WriteString(fmt.Sprintf("%s=%v\n", key, localValue))
-	sb.WriteString(fmt.Sprintf("=======\n"))
+	sb.WriteString("=======\n")
 	sb.WriteString(fmt.Sprintf("%s=%v\n", key, remoteValue))
-	sb.WriteString(fmt.Sprintf(">>>>>>> REMOTE\n"))
+	sb.WriteString(">>>>>>> REMOTE\n")
 	return sb.String()
 }
