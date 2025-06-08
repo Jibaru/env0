@@ -119,7 +119,7 @@ func processEnvironmentUpdates(envs map[string]map[string]interface{}, targetEnv
 				} else if change.Type == envdiff.Added {
 					content.WriteString(fmt.Sprintf("%s=%v\n", change.Name, change.NewValue))
 				} else if change.Type == envdiff.Deleted {
-					content.WriteString(envdiff.FormatGitStyleConflict(change.Name, change.OldValue, "DELETED"))
+					content.WriteString(envdiff.FormatGitStyleConflict(change.Name, change.OldValue, envdiff.DeletedValue{}))
 				}
 			}
 

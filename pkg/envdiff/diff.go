@@ -8,6 +8,9 @@ import (
 	"time"
 )
 
+// DeletedValue is a special type to represent deleted values
+type DeletedValue struct{}
+
 // CompareMaps compares two environment maps and returns a DiffResult
 func CompareMaps(original, new map[string]interface{}) DiffResult {
 	var changes []Change
@@ -101,9 +104,13 @@ func MergeMaps(original, new map[string]interface{}, diff DiffResult) map[string
 func FormatGitStyleConflict(key string, localValue, remoteValue interface{}) string {
 	var sb strings.Builder
 	sb.WriteString("<<<<<<< LOCAL\n")
-	sb.WriteString(fmt.Sprintf("%s=%v\n", key, localValue))
+	if _, isDeleted := localValue.(DeletedValue); !isDeleted {
+		sb.WriteString(fmt.Sprintf("%s=%v\n", key, localValue))
+	}
 	sb.WriteString("=======\n")
-	sb.WriteString(fmt.Sprintf("%s=%v\n", key, remoteValue))
+	if _, isDeleted := remoteValue.(DeletedValue); !isDeleted {
+		sb.WriteString(fmt.Sprintf("%s=%v\n", key, remoteValue))
+	}
 	sb.WriteString(">>>>>>> REMOTE\n")
 	return sb.String()
 }
