@@ -3,8 +3,11 @@ package scripts
 import (
 	"context"
 	"fmt"
+	"os"
+	"time"
 
 	"github.com/Jibaru/env0/pkg/client"
+	"github.com/Jibaru/env0/pkg/envdiff"
 	"github.com/Jibaru/env0/pkg/envfile"
 	"github.com/Jibaru/env0/pkg/logger"
 )
@@ -33,7 +36,7 @@ func NewPull(c client.Client, logger logger.Logger) PullFn {
 			return fmt.Errorf("failed to fetch environments: %v", err)
 		}
 
-		if err := writeEnvironmentFiles(envs, input.TargetEnv, logger); err != nil {
+		if err := processEnvironmentUpdates(envs, input.TargetEnv, logger); err != nil {
 			return err
 		}
 
@@ -49,18 +52,61 @@ func getEnvFileName(envName string) string {
 	return fmt.Sprintf(".env.%s", envName)
 }
 
-func writeEnvironmentFiles(envs map[string]map[string]interface{}, targetEnv *string, logger logger.Logger) error {
-	for envName, vars := range envs {
+func processEnvironmentUpdates(envs map[string]map[string]interface{}, targetEnv *string, logger logger.Logger) error {
+	for envName, remoteVars := range envs {
 		if targetEnv != nil && envName != *targetEnv {
 			continue
 		}
 
 		fileName := getEnvFileName(envName)
-		if err := envfile.WriteEnvFile(fileName, vars); err != nil {
-			return err
+
+		// Create backup of current env file
+		backupPath, err := envdiff.CreateBackup(fileName)
+		if err != nil {
+			return fmt.Errorf("failed to create backup for %s: %v", fileName, err)
+		}
+		if backupPath != "" {
+			logger.Printf("created backup at: %s", backupPath)
 		}
 
-		logger.Printf("created environment file: %s", fileName)
+		// Load current environment if it exists
+		currentVars, err := envfile.ParseEnvFile(fileName)
+		if err != nil {
+			if !os.IsNotExist(err) {
+				return fmt.Errorf("failed to parse current env file %s: %v", fileName, err)
+			}
+			currentVars = make(map[string]interface{})
+		}
+
+		// Compare current and remote states
+		diff := envdiff.CompareMaps(currentVars, remoteVars)
+
+		if len(diff.Changes) == 0 {
+			logger.Printf("no changes detected for environment: %s", envName)
+			continue
+		}
+
+		// If there are changes, decide what to do
+		if diff.SafeToMerge {
+			// Only new variables, safe to merge
+			mergedVars := envdiff.MergeMaps(currentVars, remoteVars, diff)
+			if err := envfile.WriteEnvFile(fileName, mergedVars); err != nil {
+				return fmt.Errorf("failed to write merged env file %s: %v", fileName, err)
+			}
+			logger.Printf("safely merged %d new variables into %s", len(diff.Changes), fileName)
+		} else {
+			// There are conflicts, keep current state and save conflict report
+			report := envdiff.ConflictReport{
+				Environment: envName,
+				Conflicts:   diff.Changes,
+				Timestamp:   time.Now().Format(time.RFC3339),
+			}
+			if err := envdiff.SaveConflictReport(report); err != nil {
+				return fmt.Errorf("failed to save conflict report for %s: %v", fileName, err)
+			}
+			logger.Printf("detected conflicts in %s, saved conflict report and preserved current state", fileName)
+			logger.Printf("review conflicts in .env0/conflicts directory")
+		}
 	}
 
 	return nil
