@@ -1,7 +1,6 @@
 package scripts
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -13,6 +12,7 @@ import (
 	"github.com/Jibaru/env0/pkg/envdiff"
 	"github.com/Jibaru/env0/pkg/envfile"
 	"github.com/Jibaru/env0/pkg/logger"
+	"github.com/Jibaru/env0/pkg/prompt"
 )
 
 type config struct {
@@ -29,7 +29,7 @@ type PushInput struct {
 type PushFn func(context.Context, PushInput) error
 
 // NewPush creates a new push function with injected dependencies
-func NewPush(c client.Client, logger logger.Logger) PushFn {
+func NewPush(c client.Client, logger logger.Logger, reader prompt.Reader) PushFn {
 	return func(ctx context.Context, input PushInput) error {
 		cfg, err := readConfigFile()
 		if err != nil {
@@ -52,7 +52,7 @@ func NewPush(c client.Client, logger logger.Logger) PushFn {
 		}
 
 		// Compare and merge changes
-		mergedEnvs, err := processPushUpdates(localEnvs, remoteEnvs, input.TargetEnv, logger)
+		mergedEnvs, err := processPushUpdates(localEnvs, remoteEnvs, input.TargetEnv, logger, reader)
 		if err != nil {
 			return err
 		}
@@ -71,14 +71,13 @@ func NewPush(c client.Client, logger logger.Logger) PushFn {
 	}
 }
 
-func promptForOverride(key string, oldValue, newValue interface{}, logger logger.Logger) bool {
+func promptForOverride(key string, oldValue, newValue interface{}, logger logger.Logger, reader prompt.Reader) bool {
 	fmt.Printf("\nVariable override detected:\n")
 	fmt.Printf("Key: %s\n", key)
 	fmt.Printf("Current value: %v\n", oldValue)
 	fmt.Printf("New value: %v\n", newValue)
 	fmt.Printf("Do you want to override this variable? [y/N]: ")
 
-	reader := bufio.NewReader(os.Stdin)
 	response, err := reader.ReadString('\n')
 	if err != nil {
 		logger.Printf("Error reading response: %v", err)
@@ -89,7 +88,7 @@ func promptForOverride(key string, oldValue, newValue interface{}, logger logger
 	return response == "y" || response == "yes"
 }
 
-func processPushUpdates(localEnvs, remoteEnvs map[string]map[string]interface{}, targetEnv *string, logger logger.Logger) (map[string]map[string]interface{}, error) {
+func processPushUpdates(localEnvs, remoteEnvs map[string]map[string]interface{}, targetEnv *string, logger logger.Logger, reader prompt.Reader) (map[string]map[string]interface{}, error) {
 	mergedEnvs := make(map[string]map[string]interface{})
 	hasChanges := false
 
@@ -123,7 +122,7 @@ func processPushUpdates(localEnvs, remoteEnvs map[string]map[string]interface{},
 		for _, change := range diff.Changes {
 			switch change.Type {
 			case envdiff.Modified:
-				if promptForOverride(change.Name, change.OldValue, change.NewValue, logger) {
+				if promptForOverride(change.Name, change.OldValue, change.NewValue, logger, reader) {
 					mergedVars[change.Name] = change.NewValue
 					hasChanges = true
 				} else {
@@ -133,7 +132,7 @@ func processPushUpdates(localEnvs, remoteEnvs map[string]map[string]interface{},
 				mergedVars[change.Name] = change.NewValue
 				hasChanges = true
 			case envdiff.Deleted:
-				if promptForOverride(change.Name, change.OldValue, "DELETED", logger) {
+				if promptForOverride(change.Name, change.OldValue, "DELETED", logger, reader) {
 					delete(mergedVars, change.Name)
 					hasChanges = true
 				} else {

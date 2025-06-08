@@ -1,8 +1,10 @@
 package commands
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -30,8 +32,9 @@ func pushCmd() *cobra.Command {
 			}
 
 			authClient := client.New(token)
+			reader := bufio.NewReader(os.Stdin)
 
-			push := scripts.NewPush(authClient, logger)
+			push := scripts.NewPush(authClient, logger, reader)
 			return push(context.Background(), scripts.PushInput{
 				TargetEnv: target,
 			})
