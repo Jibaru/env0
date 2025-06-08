@@ -1,4 +1,3 @@
-
 # env0
 
 `env0` is a command-line interface for interacting with the **env0 API**, a zero-trusted environment variables storage service.
@@ -92,13 +91,15 @@ Once authenticated, you can initialize, clone, and manage apps.
 | `signup` | Create a new user account        |
 | `login`  | Authenticate an existing account |
 | `logout` | Remove local credentials         |
+| `whoami` | Show current user information    |
 
 ### App Management
 
-| Command       | Description                          |
-| ------------- | ------------------------------------ |
-| `init <app>`  | Create a new app repository          |
-| `clone <app>` | Download an existing app's env files |
+| Command         | Description                          |
+| -------------- | ------------------------------------ |
+| `init <app>`   | Create a new app repository          |
+| `clone <app>`  | Download an existing app's env files |
+| `listapps`     | List all accessible apps             |
 
 ### Environment Operations
 
@@ -107,14 +108,22 @@ Once authenticated, you can initialize, clone, and manage apps.
 | Command               | Description                                    |
 | --------------------- | ---------------------------------------------- |
 | `pull [<env>]`        | Fetch latest variables to local `.env` files       |
-| `push [<env>]`        | Upload local `.env` files to remote service.    |
+| `push [<env>]`        | Upload local `.env` files to remote service    |
 
 ### User Management
 
 | Command              | Description                                |
 | -------------------- | ------------------------------------------ |
-| `adduser <username>` | Grant a user access to the current app |
-| `deluser <username>` | Revoke a user's access to the current app                     |
+| `adduser <username>` | Grant a user access to the current app     |
+| `deluser <username>` | Revoke a user's access to the current app  |
+| `listusers`         | List all users with access to current app  |
+
+### System
+
+| Command     | Description                          |
+| ----------- | ------------------------------------ |
+| `version`   | Show version information             |
+| `cfg`       | Manage configuration settings        |
 
 ---
 
