@@ -99,7 +99,7 @@ func processEnvironmentUpdates(envs map[string]map[string]interface{}, targetEnv
 			report := envdiff.ConflictReport{
 				Environment: envName,
 				Conflicts:   diff.Changes,
-				Timestamp:   time.Now().Format(time.RFC3339),
+				Timestamp:   time.Now(),
 			}
 			if err := envdiff.SaveConflictReport(report); err != nil {
 				return fmt.Errorf("failed to save conflict report for %s: %v", fileName, err)

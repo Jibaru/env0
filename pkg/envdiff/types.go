@@ -1,5 +1,7 @@
 package envdiff
 
+import "time"
+
 // ChangeType represents the type of change in an environment variable
 type ChangeType string
 
@@ -27,5 +29,5 @@ type DiffResult struct {
 type ConflictReport struct {
 	Environment string
 	Conflicts   []Change
-	Timestamp   string
+	Timestamp   time.Time
 }

@@ -85,7 +85,7 @@ func SaveConflictReport(report ConflictReport) error {
 
 	filename := filepath.Join(reportsDir, fmt.Sprintf("conflicts_%s_%s.json",
 		report.Environment,
-		report.Timestamp))
+		report.Timestamp.Format("20060102150405")))
 
 	data, err := json.MarshalIndent(report, "", "  ")
 	if err != nil {
